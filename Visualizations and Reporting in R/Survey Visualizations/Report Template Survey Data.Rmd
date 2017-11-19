@@ -1,0 +1,111 @@
+---
+title: "Report Template Survey Data"
+author: "Office of Institutional Research"
+date: "November 2017"
+output: 
+  html_document: 
+    theme: readable
+---
+<img src="school_logo.png" style="position:absolute;top:0px;right:0px;" />
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#' for loading multiple packages will assess whether a package needs to be installed before loading
+#' the argument pkg takes a list of package names in quotes e.g. pkgs = c("dplyr","tidyr")
+
+pkgs <- c("tidyverse", "likert")
+for(pkg in pkgs) {
+  if(!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    library(pkg, character.only = TRUE)
+  }
+  library(pkg, character.only = TRUE)
+}
+
+survey <- read.csv("fake_senior_survey_trend.csv")
+meta <- read.csv("senior_meta.csv")
+```
+
+## Introduction
+
+You can write text anywhere in the white space. Just as you would using Word. You can also **bold** words or *italic* words as much as you want. If you know html you can use that knowledge in these files as well. For a Markdown Quick Reference help file click Help -> Markdown Quick Reference up above.  
+
+### Summary
+
+You can also add tables like the one below. As well as inline R code used below to find the number of observations in each dataset. 
+
+Dataset       | Number of rows
+------------- | -------------
+```survey```  | `r prettyNum(nrow(survey), ",")`
+```meta```    | `r prettyNum(nrow(meta), ",") `
+
+### Survey Data
+Topline frequencies.
+```{r likert item, echo=F, results='hide', fig.align='center', fig.height=8, fig.width=11}
+abilities <- survey %>%  
+  select(kccrit, kclead, kcsynth, kcrelate, kcwrite, kcjudge) %>%  
+  mutate(kccrit = factor(kccrit, levels = c("Very little or none","Some","Quite a bit", "Very much")),
+         kclead = factor(kclead, levels = c("Very little or none","Some","Quite a bit", "Very much")),
+         kcsynth = factor(kcsynth, levels = c("Very little or none","Some","Quite a bit", "Very much")),
+         kcrelate = factor(kcrelate, levels = c("Very little or none","Some","Quite a bit", "Very much")),
+         kcwrite = factor(kcwrite, levels = c("Very little or none","Some","Quite a bit", "Very much")),
+         kcjudge = factor(kcjudge, levels = c("Very little or none","Some","Quite a bit", "Very much")))
+
+colnames(abilities) <-  as.character(meta$item)[match(names(abilities), meta$variable)]
+
+abilities_likert <- likert(abilities)
+
+p4 <- likert.bar.plot(abilities_likert) + 
+  ggtitle("College's Contribution to Abilities and Knowledge") + 
+  theme_bw()
+p4
+```
+
+Survey questions disagregated by survey administration. 
+```{r likert groups, echo=F, results='hide', warning=FALSE, fig.height=10, fig.width=11}
+proptab <- function (item, group) {
+  tab <- table(item, group) 
+  proptab <- tab %>%
+    prop.table(2)
+  test <- chisq.test(tab)
+  return(list(tab = proptab, pvalue = test$p.value))
+}
+
+likert_plot <- function(ds, variables, ordered_levels, meta_item, meta_variable, cutby, group_labels, title, ...) { # inputs
+  s <- subset(ds, select=variables) # select the variables that will be included in the graph
+  for (i in 1:length(names(s))) { # for each variable do the following:
+    print(paste(names(s)[i],"-", meta_item[meta_variable==names(s)[i]])) # print the variable name and the corresponding item
+    s[,i] <- factor(s[,i], levels = ordered_levels) # order the variable based on the levels provided
+    tb <- proptab(item = s[,i], group=cutby) # create a cross tab of the variable with the cutby variable specified and run a chi-square test
+    colnames(s)[i] <-  ifelse(is.na(tb$pvalue), # if the pvalue from the chi-square test is missing (meaning there wasn't enough for the test)
+                              as.character(meta_item)[match(names(s)[i], meta_variable)], # then change the variable name to the corresponding readable name
+                              ifelse(tb$pvalue <= 0.05, # else if the p-value is less then the standard 0.05 cutoff
+                                     paste0(meta_item[match(names(s[i]), meta_variable)], "*"), # then change the variable name to a concatination of the readable name with a significance star
+                                     as.character(meta_item)[match(names(s)[i], meta_variable)])) # else change the variable name to the corresponding readable name
+    print(tb) # print out the table
+    rm(tb) # remove the table (keeps environment clean)
+  }
+  resg <- likert(s, grouping = cutby) # run the data through the likert function and group the data by the cutby variable
+  plot <- likert.bar.plot(resg, group.order=group_labels, decimal = 1, ...) + # plot the results keeping the cutby variable levels in order
+    ggtitle(title) + # add title
+    theme_bw() # add personalized theme
+  
+  return(plot) # output the plot
+}
+
+
+p5 <- likert_plot(ds = survey, variables = c( "kccrit", "kclead", "kcrelate", "kcwrite", "kcjudge", "kcsynth"),
+                  ordered_levels =c("Very little or none","Some","Quite a bit", "Very much"),
+                  meta_item = meta$item,
+                  meta_variable = meta$variable,
+                  cutby = survey$surveyyear,
+                  group_labels = c("2012","2013",  "2014", "2015"),
+                  title = "College's Contribution to Abilities and Knowledge")
+
+p5
+
+```
+Notice the \* next to Relating well to people of different races, nations, and religions. The \* denotes significance in a chi-square test. Remember at R's core it is meant for both statistics and data visualizations.
+
+It is not a question of whether it can be done but of how to code it.

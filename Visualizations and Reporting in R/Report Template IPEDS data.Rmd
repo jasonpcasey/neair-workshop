@@ -1,0 +1,120 @@
+---
+title: "Report Template"
+author: "Office of Institutional Research"
+date: "November 2017"
+output: 
+  html_document: 
+    theme: readable
+---
+<img src="school_logo.png" style="position:absolute;top:0px;right:0px;" />
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#' for loading multiple packages will assess whether a package needs to be installed before loading
+#' the argument pkg takes a list of package names in quotes e.g. pkgs = c("dplyr","tidyr")
+
+pkgs <- c("tidyverse")
+for(pkg in pkgs) {
+  if(!require(pkg, character.only = TRUE)) {
+    install.packages(pkg)
+    library(pkg, character.only = TRUE)
+  }
+  library(pkg, character.only = TRUE)
+}
+
+ipeds_adm <- read.csv("IPEDS_admissions_subset.csv", check.names = F, stringsAsFactors = F)
+
+# We will subset set the dataset in this chunk so no one sees it
+ds <- filter(ipeds_adm, `State abbreviation_value`%in%c("MA", "NY", "NJ"),
+                           `Control of institution`=="Public")
+```
+
+## Introduction
+
+You can write text anywhere in the white space. Just as you would when using Word. You can also **bold** words or *italic* words as much as you want. If you know html you can use that knowledge in these files as well. For a Markdown Quick Reference help file click Help -> Markdown Quick Reference up above.  
+
+### Summary
+
+You can also add tables like the one below. As well as inline R code used below to find the number of observations in each dataset. 
+
+Dataset       | Number of rows
+------------- | -------------
+  ```ipeds_adm```  | `r prettyNum(nrow(ds), ",")`
+
+### Scatter Plot
+
+#### Research Question 1
+What is the relationship between admit rate and yield for public institutions in MA, NY, and NJ?
+  
+```{r line count, echo=F, fig.align='center', fig.height=5, fig.width=9}
+ds1 <- ds %>% # take the full dataset THEN
+  mutate(`Admit rate` = `Admissions total`/`Applicants total`, # create a new variable called Admit rate calculated as admitted total over applicants total
+         `Yield` = `Enrolled total`/`Admissions total`) # create another new variable called Yield calculated as enrolled total over admitted total
+
+p1 <- ggplot(ds1, aes(x = `Admit rate`, y = `Yield`, color = `State abbreviation`)) + # create the coordinate plane mapping Admit rate to the x axis and Yield to the y axis, and State to color then ADD
+  geom_point(size = 2) + # points and increase the size of the points
+  scale_x_continuous(name = "Admit Rate", 
+                     limits = c(0, 1), 
+                     labels = scales::percent) + # change the x axis title and limits to start the graph at zero
+  scale_y_continuous(name = "Yield", 
+                     limits = c(0, 1), 
+                     labels = scales::percent) + # change the y axis title and limits to start the graph at zero
+  ggtitle("Admit Rate vs Yield") + # then add a title
+  theme_bw() # change the default theme
+p1
+```
+
+### Line Chart
+
+#### Research Question 2
+Has the average admit rate changed over time for public institutions in MA, NY, or NJ?
+```{r line percent, echo=F, fig.align='center', fig.height=5, fig.width=9}
+ds2 <- ds1 %>% 
+  group_by(`State abbreviation`,`ACAD_YEAR`) %>% 
+  summarise(N = n(), avg_admit = mean(`Admit rate`))
+
+p2 <- ggplot(ds2, aes(x = ACAD_YEAR, y = avg_admit, group = `State abbreviation`, color = `State abbreviation`, shape = `State abbreviation`)) + 
+  geom_line(lwd = 1.5) + 
+  geom_point(size = 3) + 
+  scale_x_continuous(name = 'Academic Year', 
+                     breaks = seq(2009,2016, by=1)) + 
+  scale_y_continuous(name = 'Average Admit Rate',
+                     limits = c(0,1),
+                     labels = scales::percent) + 
+  scale_colour_manual(name = '', 
+                      labels = c('MA', 'NY', "NJ"), 
+                      values = c('darkred', 'darkgreen', 'darkblue')) +
+  scale_shape_manual(name = '', 
+                     labels = c('MA', 'NY', "NJ"), 
+                     values = c(15, 16, 17)) +
+  ggtitle('Average Admit Rate Over Time') + 
+  theme_bw()
+p2
+```
+
+### Bar Chart
+
+#### Research Question 3
+Are public institutions in MA, NY and NJ becoming test optional?
+
+```{r bar, echo=F, fig.align='center', fig.height=5, fig.width=9}
+ds3 <- ds1 %>% select(UNITID, `Institution (entity) name`, `State abbreviation`, `Admission test scores`, ACAD_YEAR)
+
+p3 <- ggplot(ds3, aes(x = ACAD_YEAR, fill = `Admission test scores`)) +
+  geom_bar(position = "fill") + 
+  scale_y_continuous(name = "Percent of Institutions",
+                     limits = c(0,1),
+                     labels = scales::percent) + 
+  scale_x_continuous(name = "Academic Year", 
+                     breaks = seq(2009, 2016, by=2)) + 
+  scale_fill_manual(name = "Admission Test Scores",
+                    values = c("gold", "blue", "purple")) +
+  facet_grid(.~`State abbreviation`) + # rows~columns
+  ggtitle("Admission Test Score Requirments Over Time") + 
+  theme_bw()
+
+p3
+```
+
+It is not a question of whether it can be done but of how to code it.

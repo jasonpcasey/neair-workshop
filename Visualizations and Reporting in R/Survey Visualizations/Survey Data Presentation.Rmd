@@ -1,0 +1,573 @@
+---
+title: "Survey Data In R"
+author: "Kate Aloisio, Smith College Office of Institutional Research "
+date: "November 19, 2017"
+output:
+  revealjs::revealjs_presentation:
+    transition: none
+    theme: simple
+    highlight: pygments
+    incremental: true
+
+---
+
+```{r, results='hide', echo=FALSE, message=FALSE}
+library(tidyverse)
+library(likert)
+
+survey <- read.csv("fake_senior_survey_trend.csv")
+meta <- read.csv("senior_meta.csv")
+```
+
+## Challenges of Survey Data Visualizations
+- Complex data: quantitative, qualitative, longitudinal, different types of scales
+- Complex analysis: validity, latent variables, stat significance
+- Complex data structure: 1 row per response  per question for many questions, many respondents and many years
+- Context is crucial: generalization from small N, variation across demographic groups, human interpretation needed
+- Respondent Privacy: surveys are confidential, risk of identification with small N's
+
+
+## How can R help?
+- ```select``` function
+- ```factor``` variables
+- ```likert``` package
+
+
+## ```Likert``` package
+- built by one of our own! Jason Bryer
+- grounded in ggplot2
+- flexible
+- able to show many items at once
+- able to show all choices 
+
+## Read in Survey Data
+- refer to guided workbook survey data chunk
+
+## Research Question 4
+- Is the College's contributing to students gaining key abilities and knowledge and to what degree?
+- To what extent has your experience in college contributed to your knowledge, skills, and personal development in the following areas?
+- choices include Very little or none, Some, Quite a bit, Very much
+
+
+## Plot 4 - Divergent Stacked Bar Chart
+```{r, eval=T, echo=F, fig.height=5, fig.width=11}
+abilities <- survey %>%  
+  select(kccrit, kclead, kcsynth, kcrelate, kcwrite, kcjudge) %>%  
+  mutate(kccrit = factor(kccrit, 
+                       levels = c("Very little or none","Some","Quite a bit", "Very much")),
+       kclead = factor(kclead, 
+                       levels = c("Very little or none","Some","Quite a bit", "Very much")),
+       kcsynth = factor(kcsynth, 
+                        levels = c("Very little or none","Some","Quite a bit", "Very much")),
+       kcrelate = factor(kcrelate, 
+                         levels = c("Very little or none","Some","Quite a bit", "Very much")),
+       kcwrite = factor(kcwrite, 
+                        levels = c("Very little or none","Some","Quite a bit", "Very much")),
+       kcjudge = factor(kcjudge, 
+                        levels = c("Very little or none","Some","Quite a bit", "Very much")))
+
+colnames(abilities) <-  as.character(meta$item)[match(names(abilities),
+                                                      meta$variable)]
+
+p4 <- likert.bar.plot(likert(abilities)) + 
+  ggtitle("College's Contribution to Abilities and Knowledge") + 
+  theme_bw()
+
+p4
+```
+
+
+## Plot 4 - Topline Divergent Stacked Bar Chart
+```{r, eval=F, echo=T}
+abilities <- survey %>%  
+  select(kccrit, kclead, kcsynth, kcrelate, kcwrite, kcjudge) %>%  
+  mutate(kccrit = factor(kccrit, 
+                       levels = c("Very little or none","Some", 
+                                  "Quite a bit", "Very much")),
+       kclead = factor(kclead, 
+                       levels = c("Very little or none","Some", 
+                                  "Quite a bit", "Very much")),
+       kcsynth = factor(kcsynth, 
+                        levels = c("Very little or none","Some",  
+                                   "Quite a bit", "Very much")),
+       kcrelate = factor(kcrelate, 
+                         levels = c("Very little or none","Some", 
+                                    "Quite a bit", "Very much")),
+       kcwrite = factor(kcwrite, 
+                        levels = c("Very little or none","Some", 
+                                   "Quite a bit", "Very much")),
+       kcjudge = factor(kcjudge, 
+                        levels = c("Very little or none","Some", 
+                                   "Quite a bit", "Very much")))
+
+colnames(abilities) <-  as.character(meta$item)[match(names(abilities), 
+                                                      meta$variable)]
+
+abilities_likert <- likert(abilities)
+
+p4 <- likert.bar.plot(abilities_likert) + 
+  ggtitle("College's Contribution to Abilities and Knowledge") + 
+  theme_bw()
+
+p4
+```
+
+## Plot 4 - Data Prep
+```{r, eval=F, echo=T}
+abilities <- survey %>%  
+  select(kccrit, kclead, kcsynth, kcrelate, kcwrite, kcjudge) %>%  
+  mutate(kccrit = factor(kccrit, 
+                       levels = c("Very little or none","Some",
+                                  "Quite a bit", "Very much")),
+       kclead = factor(kclead, 
+                       levels = c("Very little or none","Some",
+                                  "Quite a bit", "Very much")),
+       kcsynth = factor(kcsynth, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")),
+       kcrelate = factor(kcrelate, 
+                         levels = c("Very little or none","Some",
+                                    "Quite a bit", "Very much")),
+       kcwrite = factor(kcwrite, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")),
+       kcjudge = factor(kcjudge, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")))
+
+colnames(abilities) <-  as.character(meta$item)[match(names(abilities), 
+                                                      meta$variable)]
+
+abilities_likert <- likert(abilities)
+```
+
+## Plot 4 - Data Prep ```select()``` 
+```{r, eval=F, echo=T}
+abilities <- survey %>%  
+  select(kccrit, kclead, kcsynth, kcrelate, kcwrite, kcjudge) 
+```
+- choose what variables to include
+- likert only wants the items that will be in the graph
+
+## Plot 4 - Data Prep ```mutate()```
+```{r, eval=F, echo=T}
+abilities <- survey %>%  
+  select(kccrit, kclead, kcsynth, kcrelate, kcwrite, kcjudge) %>%  
+  mutate(kccrit = factor(kccrit, 
+                       levels = c("Very little or none","Some",
+                                  "Quite a bit", "Very much")),
+       kclead = factor(kclead, 
+                       levels = c("Very little or none","Some",
+                                  "Quite a bit", "Very much")),
+       kcsynth = factor(kcsynth, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")),
+       kcrelate = factor(kcrelate, 
+                         levels = c("Very little or none","Some",
+                                    "Quite a bit", "Very much")),
+       kcwrite = factor(kcwrite, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")),
+       kcjudge = factor(kcjudge, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")))
+```
+- create new or modify variables with functions of existing variables
+- ```factor()``` function allows us to set the order of the choices
+
+## Plot 4 - Data Prep ```colnames()```
+```{r}
+colnames(abilities) <-  as.character(meta$item)[match(names(abilities), 
+                                                      meta$variable)]
+```
+- the column names determine the readability of the y labels
+- match the unreadable variable name with the full version of the item in the meta file
+- let's look at the meta file
+
+## Meta file
+```{r}
+head(meta)
+```
+- contains the variable name and the full item language
+
+## Plot 4 - Data Prep ```abilities```
+Translation - Take our survey data then keep only the variables we would like to graph then order the levels in each of these variables. Change the variable names to more understandable words.
+
+
+## Plot 4 - Data Prep ```likert()```
+```{r, eval=F, echo=T}
+abilities_likert <- likert(abilities)
+```
+- Takes raw data and summarises the number of responses per choice
+- Still groups and summarises
+
+## Plot 4 - Create Plot ```likert.bar.plot```
+```{r, eval=F, echo=T}
+abilities <- survey %>%  
+  select(kccrit, kclead, kcsynth, kcrelate, kcwrite, kcjudge) %>%  
+  mutate(kccrit = factor(kccrit, 
+                       levels = c("Very little or none","Some",
+                                  "Quite a bit", "Very much")),
+       kclead = factor(kclead, 
+                       levels = c("Very little or none","Some",
+                                  "Quite a bit", "Very much")),
+       kcsynth = factor(kcsynth, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")),
+       kcrelate = factor(kcrelate, 
+                         levels = c("Very little or none","Some",
+                                    "Quite a bit", "Very much")),
+       kcwrite = factor(kcwrite, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")),
+       kcjudge = factor(kcjudge, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")))
+
+colnames(abilities) <-  as.character(meta$item)[match(names(abilities), 
+                                                      meta$variable)]
+
+abilities_likert <- likert(abilities)
+
+p4 <- likert.bar.plot(abilities_likert)
+```
+- a function to plot likert results
+
+## Plot 4 - Title and Theme
+```{r, eval=F, echo=T}
+abilities <- survey %>%  
+select(kccrit, kclead, kcsynth, kcrelate, kcwrite, kcjudge) %>%  
+mutate(kccrit = factor(kccrit, 
+                       levels = c("Very little or none","Some",
+                                  "Quite a bit", "Very much")),
+       kclead = factor(kclead, 
+                       levels = c("Very little or none","Some",
+                                  "Quite a bit", "Very much")),
+       kcsynth = factor(kcsynth, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")),
+       kcrelate = factor(kcrelate, 
+                         levels = c("Very little or none","Some",
+                                    "Quite a bit", "Very much")),
+       kcwrite = factor(kcwrite, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")),
+       kcjudge = factor(kcjudge, 
+                        levels = c("Very little or none","Some",
+                                   "Quite a bit", "Very much")))
+
+colnames(abilities) <-  as.character(meta$item)[match(names(abilities),
+                                                      meta$variable)]
+
+abilities_likert <- likert(abilities)
+
+p4 <- likert.bar.plot(abilities_likert) + 
+  ggtitle("College's Contribution to Abilities and Knowledge") + 
+  theme_bw()
+```
+- all ggplot layers can be used including adding a title or theme
+- personalized!
+- Try it!
+
+
+## Plot 5 - Faceted Divergent Stacked Bar Chart
+```{r, echo=F, eval=T, results='hide'}
+proptab <- function (item, group) {
+  tab <- table(item, group) 
+  proptab <- tab %>%
+    prop.table(2)
+  test <- chisq.test(tab)
+  return(list(tab = proptab, pvalue = test$p.value))
+}
+
+likert_plot <- function(ds, variables, ordered_levels, meta_item, meta_variable, cutby, group_labels, title, ...) { # inputs
+  s <- subset(ds, select=variables) # select the variables that will be included in the graph
+  for (i in 1:length(names(s))) { # for each variable do the following:
+    print(paste(names(s)[i],"-", meta_item[meta_variable==names(s)[i]])) # print the variable name and the corresponding item
+    s[,i] <- factor(s[,i], levels = ordered_levels) # order the variable based on the levels provided
+    tb <- proptab(item = s[,i], group=cutby) # create a cross tab of the variable with the cutby variable specified and run a chi-square test
+    colnames(s)[i] <-  ifelse(is.na(tb$pvalue), # if the pvalue from the chi-square test is missing (meaning there wasn't enough for the test)
+                              as.character(meta_item)[match(names(s)[i], meta_variable)], # then change the variable name to the corresponding readable name
+                              ifelse(tb$pvalue <= 0.05, # else if the p-value is less then the standard 0.05 cutoff
+                                     paste0(meta_item[match(names(s[i]), meta_variable)], "*"), # then change the variable name to a concatination of the readable name with a significance star
+                                     as.character(meta_item)[match(names(s)[i], meta_variable)])) # else change the variable name to the corresponding readable name
+    print(tb) # print out the table
+    rm(tb) # remove the table (keeps environment clean)
+  }
+  resg <- likert(s, grouping = cutby) # run the data through the likert function and group the data by the cutby variable
+  plot <- likert.bar.plot(resg, group.order=group_labels, decimal = 1, ...) + # plot the results keeping the cutby variable levels in order
+    ggtitle(title) + # add title
+    theme_bw() # add personalized theme
+
+  return(plot) # output the plot
+}
+
+
+p5 <- likert_plot(ds = survey, variables = c( "kccrit", "kclead", "kcrelate", "kcwrite", "kcjudge", "kcsynth"),
+                          ordered_levels =c("Very little or none","Some","Quite a bit", "Very much"),
+                          meta_item = meta$item,
+                          meta_variable = meta$variable,
+                          cutby = survey$surveyyear,
+                          group_labels = c("2012","2013",  "2014", "2015"),
+                          title = "College's Contribution to Abilities and Knowledge")
+
+p5
+```
+
+
+## Plot 5 - Faceted Divergent Stacked Bar Chart
+- this last graph is exactly what I do
+- all of our routinized survey analyses use these graphs
+- Let's go into the code line by line
+
+
+
+## Plot 5 - ```likert_plot```
+```{r, eval=F, echo=T}
+p5 <- likert_plot(ds = survey, variables = c( "kccrit", "kclead", "kcrelate", "kcwrite", "kcjudge", "kcsynth"),
+                          ordered_levels =c("Very little or none","Some","Quite a bit", "Very much"),
+                          meta_item = meta$item,
+                          meta_variable = meta$variable,
+                          cutby = survey$surveyyear,
+                          group_labels = c("2012","2013",  "2014", "2015"),
+                          title = "College's Contribution to Abilities and Knowledge")
+
+p5
+```
+- user created function
+
+
+## ```likert_plot``` - Defining a Function
+```{r, eval=F, echo=T}
+likert_plot <- function(ds, variables, ordered_levels, meta_item, meta_variable, cutby, group_labels, title, ...) { 
+  s <- subset(ds,
+              select=variables)
+  
+  for (i in 1:length(names(s))) { 
+    print(paste(names(s)[i],"-", meta_item[meta_variable==names(s)[i]])) 
+    
+    s[,i] <- factor(s[,i], 
+                    levels = ordered_levels) 
+    
+    tb <- proptab(item = s[,i], 
+                  group=cutby)
+    
+    colnames(s)[i] <-  ifelse(is.na(tb$pvalue),
+                              as.character(meta_item)[match(names(s)[i], meta_variable)], 
+                              ifelse(tb$pvalue <= 0.05, 
+                                     paste0(meta_item[match(names(s[i]), meta_variable)], "*"), 
+                                     as.character(meta_item)[match(names(s)[i], meta_variable)])) 
+    print(tb) 
+    rm(tb) 
+  }
+  resg <- likert(s, grouping = cutby) 
+  plot <- likert.bar.plot(resg, group.order=group_labels, decimal = 1, ...) + 
+    ggtitle(title) + 
+    theme_bw() 
+
+  return(plot)
+}
+```
+
+## ```likert_plot``` - Inputs
+- ```ds```: dataset
+- ```variables```: survey items
+- ```ordered_levels``: factor levels in order
+- ```meta_item```: column in meta file with the full item label
+- ```meta_variable```: column in meta file with the variable name
+- ```cutby```: faceting variable
+- ```group_labels```: labels for the faceting variable
+- ```title```: title of the graph
+
+## ```proptab``` - Contingency Table and Statistical Tests 
+```{r, eval=F, echo=T}
+proptab <- function (item, group) {
+  tab <- table(item, group) 
+  proptab <- tab %>%
+    prop.table(2)
+  test <- chisq.test(tab)
+  return(list(tab = proptab, pvalue = test$p.value))
+}
+```
+
+## ```likert_plot``` - Select data
+```{r, eval=F, echo=T}
+  s <- subset(ds,
+              select=variables)
+```
+
+## ```likert_plot``` - Data Prep and Analysis
+```{r, eval=F, echo=T}
+  for (i in 1:length(names(s))) { 
+    print(paste(names(s)[i],"-", meta_item[meta_variable==names(s)[i]])) 
+    
+    s[,i] <- factor(s[,i], 
+                    levels = ordered_levels) 
+    
+    tb <- proptab(item = s[,i], 
+                  group=cutby)
+    
+    colnames(s)[i] <-  ifelse(is.na(tb$pvalue),
+                              as.character(meta_item)[match(names(s)[i], 
+                                                            meta_variable)], 
+                              ifelse(tb$pvalue <= 0.05, 
+                                     paste0(meta_item[match(names(s[i]), 
+                                                            meta_variable)], "*"), 
+                                     as.character(meta_item)[match(names(s)[i], 
+                                                                   meta_variable)])) 
+    print(tb) 
+    rm(tb) 
+  }
+```
+
+## ```likert_plot``` - Create Likert object
+```{r, eval=F, echo=T}
+resg <- likert(s, grouping = cutby) 
+```
+
+## ```likert_plot``` - Create and Return Plot
+```{r, eval=F, echo=T}
+plot <- likert.bar.plot(resg, group.order=group_labels, decimal = 1, ...) + 
+    ggtitle(title) + 
+    theme_bw() 
+
+return(plot)
+```
+
+## Plot 5 - Defining a Function
+```{r, eval=F, echo=T}
+likert_plot <- function(ds, variables, ordered_levels, meta_item, meta_variable, cutby, group_labels, title, ...) { 
+  s <- subset(ds,
+              select=variables)
+  
+  for (i in 1:length(names(s))) { 
+    print(paste(names(s)[i],"-", meta_item[meta_variable==names(s)[i]])) 
+    
+    s[,i] <- factor(s[,i], 
+                    levels = ordered_levels) 
+    
+    tb <- proptab(item = s[,i], 
+                  group=cutby)
+    
+    colnames(s)[i] <-  ifelse(is.na(tb$pvalue),
+                              as.character(meta_item)[match(names(s)[i], meta_variable)], 
+                              ifelse(tb$pvalue <= 0.05, 
+                                     paste0(meta_item[match(names(s[i]), meta_variable)], "*"), 
+                                     as.character(meta_item)[match(names(s)[i], meta_variable)])) 
+    print(tb) 
+    rm(tb) 
+  }
+  resg <- likert(s, grouping = cutby) 
+  plot <- likert.bar.plot(resg, group.order=group_labels, decimal = 1, ...) + 
+    ggtitle(title) + 
+    theme_bw() 
+
+  return(plot)
+}
+```
+
+## Plot 5 - ```likert_plot```
+```{r, eval=F, echo=T}
+p5 <- likert_plot(ds = survey, 
+                  variables = c( "kccrit", "kclead", "kcrelate", "kcwrite", "kcjudge", "kcsynth"),
+                  ordered_levels =c("Very little or none","Some","Quite a bit", "Very much"),
+                  meta_item = meta$item,
+                  meta_variable = meta$variable,
+                  cutby = survey$surveyyear,
+                  group_labels = c("2012","2013",  "2014", "2015"),
+                  title = "College's Contribution to Abilities and Knowledge")
+
+p5
+```
+
+## Try it!
+- Change the faceting variable to a survey item. What else needs to change?
+
+## Extra 3 
+```{r, eval=F, echo=T}
+p5 <- likert_plot(ds = survey, 
+                  variables = c( "kccrit", "kclead", "kcrelate", "kcwrite", "kcjudge", "kcsynth"),
+                  ordered_levels =c("Very little or none","Some","Quite a bit", "Very much"),
+                  meta_item = meta$item,
+                  meta_variable = meta$variable,
+                  cutby = survey$pfacres,
+                  group_labels = c("No","Yes"),
+                  title = "College's Contribution to Abilities and Knowledge by Research Experience")
+
+p5
+```
+
+## Thank you for coming!
+
+
+## Getting Help
+- There is extensive documentation and help in R. The ```help.start()``` function will launch a webpage with links to:
+  + The R manuals
+  + The R FAQ
+  + Search engine
+  + and many other useful sites
+
+- The ```help.search()``` function will search the help file for a particular word or phrase. For example:
+```help.search('cross tabs')```
+
+- The ```help()``` function or ```?functionName``` will open the documentation page for a specific function.
+
+## Help Pages Tips
+- Scan page for relevant information
+- Ignore things that don't make sense
+- Try out examples
+
+## Common workflow
+1. Start New Project
+2. Write code in an R script
+3. Run code in console with Run
+4. Save R script when finished
+
+## Shortcuts
+- Up arrow -> Previous command
+- Tab -> Auto-complete
+- Ctrl (or Cmd) Enter -> Run line from source
+- Escape -> To escape from + land
+- Ctrl (or Cmd) L -> To clear the console
+- Alt - -> To insert the assignment symbol "<-" 
+
+
+  
+## Useful Packages
+Package   | Description
+----------|--------------------------------------------------------------------------------------
+mosaic    | Data sets and utilities from Project MOSAIC (mosaic-web.org) used to teach mathematics, statistics, computation and modeling. 
+tidyr     | tidyr is new package that makes it easy to "tidy" your data.
+dplyr     | A fast, consistent tool for working with data frame like objects.
+lubridate | Makes dealing with dates a little easier. 
+ggplot2   | Fantastic package for creating really nice looking graphics http://had.co.nz/ggplot2.
+ggvis     | An implementation of an interactive grammar of graphics, taking the best parts of 'ggplot2', combining them with the reactive framework from 'shiny' and web graphics from 'vega'.
+foreign   | Contains functions to read SPSS files.
+xlsx      | Contains functions to read Excel spreadsheets.
+psych     | Package contains lots of useful functions for descriptive statistics.
+likert    | Functions to analyze and visualize likert type items.
+
+
+## Acknowledgments
+- Smith College IR Folks
+- Nick Horton and Project MOSAIC  
+- Jason Bryer Intro to R Slides
+- Garrett Grolemund RStudio Intro to R Slides
+
+## Resources
+- Student Guide to R using mosaic - http://cran.r-project.org/doc/contrib/Horton+Pruim+Kaplan_MOSAIC-StudentGuide.pdf
+- RStudio Support - https://support.rstudio.com/hc/en-us/categories/200035113-Documentation
+- More RStudio shortcuts - https://support.rstudio.com/hc/en-us/articles/200711853-Keyboard-Shortcuts
+- R-Bloggers http://r-bloggers.com
+- R in Action http://www.manning.com/kabacoff/
+- R for SAS & SPSS Users http://oit.utk.edu/scc/RforSAS&SPSSusers.pdf
+- An Introduction to R http://cran.r-project.org/doc/manuals/R-intro.pdf
+- simpleR: Using R for Introductory Statistics http://cran.r-project.org/doc/contrib/Verzani-SimpleR.pdf
+- Quick-R http://statmethods.net
+- R Reference Card http://cran.r-project.org/doc/contrib/Short-refcard.pdf
+- R Cheat Sheets http://devcheatsheet.com/tag/r
+- ggplot2 http://had.co.nz/ggplot2
+- Tidyverse http://r4ds.had.co.nz/index.html
+
+
+
