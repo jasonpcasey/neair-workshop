@@ -1,0 +1,116 @@
+---
+title: 'Report Template'
+author: 'OSPIR'
+output:
+  html_document:
+  theme: readable
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+
+ipeds_adm <- read.csv('IPEDS_admissions_subset.csv',
+                      check.names = FALSE,
+                      stringsAsFactors = FALSE)
+
+inst_type <- 'Public'
+
+ds <- ipeds_adm %>%
+  filter(`State abbreviation_value` %in% c('MA','NY','NJ') &
+           `Control of institution`==inst_type) %>%
+  mutate(`Admit rate`=`Admissions total`/`Applicants total`,
+         `Yield`=`Enrolled total`/`Admissions total`)
+
+```
+
+# Research Question 1
+
+What is the relationship between admit rate and yield for `r tolower(inst_type)` institutions in MA, NJ, and NY?
+
+```{r plot1, echo=FALSE}
+ggplot(ds,
+       aes(x=`Admit rate`,
+           y=Yield,
+           color=`State abbreviation`)) +
+  geom_point() +
+  scale_x_continuous(name='Admit Rate',
+                     limits=c(0,1),
+                     labels=scales::percent) +
+  scale_y_continuous(name='Yield',
+                     limits=c(0,1),
+                     labels=scales::percent) +
+  ggtitle('Admit vs Yield Rate') +
+  theme_classic()
+
+```
+
+# Research Question 2
+
+What is the average admit rate over time for `r tolower(inst_type)` institutions in MA, NJ, and NY?
+
+```{r plot2, echo=FALSE}
+ds1_group <- ds %>%
+  group_by(`State abbreviation`,
+           ACAD_YEAR) %>%
+  summarise(N = n(),
+            avg_admit = mean(`Admit rate`))
+
+ggplot(ds1_group,
+       aes(x=ACAD_YEAR,
+           y=avg_admit,
+           group=`State abbreviation`,
+           color=`State abbreviation`,
+           shape=`State abbreviation`)) +
+  geom_line(lwd=1.5) +
+  geom_point(size=3) +
+  scale_x_continuous(name='Academic Year',
+                     breaks=seq(2009,2016, by=1)) +
+  scale_y_continuous(name='Average Admit Rate',
+                     limits=c(0,1),
+                     labels=scales::percent) +
+  scale_color_manual(name='',
+                     labels=c('MA','NJ','NY'),
+                     values=c('darkred','darkgreen','darkblue')) +
+  scale_shape_manual(name='',
+                     labels=c('MA','NJ','NY'),
+                     values=c(15,16,17)) +
+  ggtitle('Average Admit Rate Over Time') + 
+  theme_bw()
+```
+
+# Research Question 3
+
+How are admissions test policies changing for `r tolower(inst_type)` institutions in MA, NJ, and NY?
+
+```{r plot3, echo=FALSE}
+ds3 <- ds %>% 
+  select(UNITID,
+         `Institution (entity) name`,
+         `State abbreviation`,
+         `Admission test scores`,
+         ACAD_YEAR)
+
+ggplot(ds3,
+       aes(x=ACAD_YEAR,
+           fill=`Admission test scores`)) +
+  geom_bar(position='fill') +
+  scale_y_continuous(name='Percentage of Institutions',
+                     limits = c(0,1),
+                     labels=scales::percent) +
+  scale_x_continuous(name='Academic Year',
+                     breaks=seq(2009,2016, by=2)) + 
+  scale_fill_manual(name='Admission Test Policy',
+                    values=c('gold','blue','purple')) +
+  facet_grid(.~`State abbreviation`) +
+  ggtitle('Admission Test Score Requirements Over Time') +
+  theme_bw()
+```
+
+# References
+
+```{r refs, echo=FALSE}
+# x <- citation()
+# toBibtex(x)
+citation()
+```
+
